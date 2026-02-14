@@ -385,21 +385,12 @@ app.all('*', async (c) => {
       }
     });
 
-    // Sanitize WebSocket close codes: 1006 and 1005 are reserved and cannot
-    // be sent by applications (RFC 6455). Convert them to 1011 (unexpected condition).
-    function sanitizeCloseCode(code: number): number {
-      if (code === 1006 || code === 1005 || code < 1000 || code > 4999) {
-        return 1011;
-      }
-      return code;
-    }
-
     // Handle close events
     serverWs.addEventListener('close', (event) => {
       if (debugLogs) {
         console.log('[WS] Client closed:', event.code, event.reason);
       }
-      containerWs.close(sanitizeCloseCode(event.code), event.reason);
+      containerWs.close(event.code, event.reason);
     });
 
     containerWs.addEventListener('close', (event) => {
@@ -414,7 +405,7 @@ app.all('*', async (c) => {
       if (debugLogs) {
         console.log('[WS] Transformed close reason:', reason);
       }
-      serverWs.close(sanitizeCloseCode(event.code), reason);
+      serverWs.close(event.code, reason);
     });
 
     // Handle errors
