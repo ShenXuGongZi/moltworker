@@ -446,37 +446,4 @@ app.all('*', async (c) => {
 
 export default {
   fetch: app.fetch,
-  /**
-   * Scheduled handler for cron triggers.
-   * Syncs container data to R2 for persistence.
-   */
-  async scheduled(event: ScheduledEvent, env: MoltbotEnv, ctx: ExecutionContext) {
-    console.log('[CRON] Scheduled sync triggered at:', new Date(event.scheduledTime).toISOString());
-    
-    try {
-      const { getSandbox } = await import('@cloudflare/sandbox');
-      const { syncToR2 } = await import('./gateway/sync');
-      
-      const sandbox = getSandbox(env.Sandbox, 'moltbot', { keepAlive: true });
-      
-      // Check if gateway is running before sync
-      const processes = await sandbox.listProcesses();
-      const isRunning = processes.some(p => p.status === 'running');
-      
-      if (!isRunning) {
-        console.log('[CRON] Gateway not running, skipping sync');
-        return;
-      }
-      
-      const result = await syncToR2(sandbox, env);
-      
-      if (result.success) {
-        console.log('[CRON] Sync completed successfully, lastSync:', result.lastSync);
-      } else {
-        console.error('[CRON] Sync failed:', result.error, result.details);
-      }
-    } catch (error) {
-      console.error('[CRON] Scheduled sync error:', error);
-    }
-  },
 };
